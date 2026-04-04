@@ -1,30 +1,46 @@
-import streamlit as st
+usuarios = {"admin": "1234"}
+
+if "logado" not in st.session_state:
+    st.session_state.logado = False
+
+if not st.session_state.logado:
+    st.subheader("🔐 Login")
+
+    user = st.text_input("Usuário")
+    senha = st.text_input("Senha", type="password")
+
+    if st.button("Entrar"):
+        if user in usuarios and usuarios[user] == senha:
+            st.session_state.logado = True
+            st.success("Login realizado")
+        else:
+            st.error("Login inválido")
+
+    st.stop()import streamlit as st
 import pandas as pd
 import random
 import os
 
 st.set_page_config(layout="wide")
 
-st.title("IA Loteria Profissional V11")
+st.title("IA Loteria Profissional V13")
 
 arquivo = st.file_uploader("Envie o CSV", type=["csv"])
 
 # -------------------------
 # BANCO LOCAL (CSV)
 # -------------------------
-def salvar_jogos(jogos):
+
+def salvar_jogos(jogos, user):
     df = pd.DataFrame(jogos, columns=["jogo", "score"])
 
-    if os.path.exists("historico.csv"):
-        antigo = pd.read_csv("historico.csv")
+    nome = f"historico_{user}.csv"
+
+    if os.path.exists(nome):
+        antigo = pd.read_csv(nome)
         df = pd.concat([antigo, df])
 
-    df.to_csv("historico.csv", index=False)
-
-def carregar_historico():
-    if os.path.exists("historico.csv"):
-        return pd.read_csv("historico.csv")
-    return None
+    df.to_csv(nome, index=False)
 
 # -------------------------
 # CICLO
@@ -94,7 +110,13 @@ def pontuar(jogo, ultimo):
         score += 3
 
     return score
+# distribuição por linhas (1–5, 6–10, etc)
+linhas = [0]*5
+for n in jogo:
+    linhas[(n-1)//5] += 1
 
+if all(l >= 2 for l in linhas):
+    score += 2
 # -------------------------
 # INTERFACE
 # -------------------------
